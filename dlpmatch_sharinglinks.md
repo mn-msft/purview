@@ -242,70 +242,7 @@ CloudAppEvents
     Application
 ```
 
-## Original correlation rule
-
-working as Sentinel Analytics rule but inconsistent due to correlating on objectname which doesn't always have data from the sharing links side
-
-```kusto
-let dlp_files = toscalar(
-    CloudAppEvents
-    | where TimeGenerated >= ago(90d)
-    | where Application in (
-        "Microsoft SharePoint Online",
-        "Microsoft OneDrive for Business"
-        )
-    | where ActionType =~ "DLPRuleMatch"
-    | where isnotempty(ObjectName)
-    | extend ObjectName = url_decode(ObjectName)
-    | summarize make_set(ObjectName)
-);
-CloudAppEvents
-| where TimeGenerated >= ago(20m)
-| where Application in (
-    "Microsoft SharePoint Online",
-    "Microsoft OneDrive for Business"
-    )
-| where ActionType in~ (
-    "CompanyLinkCreated", 
-    "CompanyLinkUpdated",
-    "SharingLinkCreated",
-    "SharingLinkUpdated",
-    "AnonymousLinkCreated",
-    "AnonymousLinkUpdated",
-    "SecureLinkCreated",
-    "SecureLinkUpdated",
-    "SharingSet",
-    "AddedToSharingLink",
-    "AddedToSecureLink"
-    )
-| where isnotempty(ObjectName)
-| where ObjectName in (dlp_files)
-| extend Raw = parse_json(RawEventData)
-| extend
-    ShareUserId                = tostring(Raw.UserId),
-    SharePermission            = tostring(Raw.Permission),
-    ShareSharingLinkScope      = tostring(Raw.SharingLinkScope),
-    ShareEV                    = tostring(Raw.EventData),
-    ShareTargetUserOrGroupName = tostring(Raw.TargetUserOrGroupName),
-    ShareTargetUserOrGroupType = tostring(Raw.TargetUserOrGroupType),
-    ShareItemType              = tostring(Raw.ItemType)
-| project
-    TimeGenerated,
-    ShareTime             = TimeGenerated,
-    ShareAction           = ActionType,
-    ShareObjectName       = ObjectName,
-    ShareItemType,
-    ShareUserId,
-    SharePermission,
-    ShareSharingLinkScope,
-    ShareEV,
-    ShareTargetUserOrGroupName,
-    ShareTargetUserOrGroupType,
-    RawEventData,
-    Application
-```
-
-## Test correlation query with folder support
+## 6. Test correlation query with folder support
 
 ```kusto
 let dlp_files = toscalar(
