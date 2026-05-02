@@ -16,20 +16,20 @@ mbx (reference list)                       CloudAppEvents
                                           │      │                    │             │
                                           │      │ susan@contoso.com  │             │
                                           └──────┴────────────────────┴─────────────┘
-                                                       │
-                                                       │ sam@contoso.com never appears
-                                                       │ 
-                                                       ▼
-                                            lookup kind=leftouter
-                                                       │
-                                                       ▼
-                                  ┌────────────────────┬──────────────────┐
-                                  │ PrimarySmtpAddress │ Status           │
-                                  ├────────────────────┼──────────────────┤
-                                  │ bob@contoso.com    │ Active           │  ← matched
-                                  │ susan@contoso.com  │ Active           │  ← matched
-                                  │ sam@contoso.com    │ Stale / Orphaned │  ← no rows found in CloudAppEvents
-                                  └────────────────────┴──────────────────┘
+                                                 │
+                                                 │ sam@contoso.com never appears
+                                                 │ 
+                                                 ▼
+                                      lookup kind=leftouter
+                                                 │
+                                                 ▼
+                            ┌────────────────────┬──────────────────┐
+                            │ PrimarySmtpAddress │ Status           │
+                            ├────────────────────┼──────────────────┤
+                            │ bob@contoso.com    │ Active           │  ← matched
+                            │ susan@contoso.com  │ Active           │  ← matched
+                            │ sam@contoso.com    │ Stale / Orphaned │  ← no rows found in CloudAppEvents
+                            └────────────────────┴──────────────────┘
 </pre>
 
 > ## query concepts
