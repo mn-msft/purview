@@ -96,41 +96,41 @@ mbx
 ### read reference list from external source
 
 ```kusto
-let mbx = materialize(                                                                       // caches the CSV result
+let mbx = materialize(
     externaldata (PrimarySmtpAddress: string) [
     @"https://demo.blob.core.windows.net/demo/mailboxes.csv"
     h@"?<sas_token>"
     ]
     with (format='csv', ignorefirstrecord=true)
-    | where PrimarySmtpAddress != "PrimarySmtpAddress"                                       // drop csv header row
-    | project PrimarySmtpAddress = tolower(PrimarySmtpAddress)                               // normalize to lowercase for case-insensitive matching
+    | where PrimarySmtpAddress != "PrimarySmtpAddress"
+    | project PrimarySmtpAddress = tolower(PrimarySmtpAddress)
     );
 let activeMailboxes =
     CloudAppEvents
     | where Timestamp >= ago(30d)
-    | where Application == "Microsoft Exchange Online"                                       // scope to Exchange only
-    | extend Raw = parse_json(RawEventData)                                                  // parse JSON once into Raw and reuse
+    | where Application == "Microsoft Exchange Online"
+    | extend Raw = parse_json(RawEventData)
     | extend MailboxOwnerUPN = tostring(Raw.MailboxOwnerUPN)
     | extend UserId = tostring(Raw.UserId)
-    | project-away Raw                                                                       // drop JSON; no longer needed
+    | project-away Raw
     | extend ResolvedUPN = tolower(case(
-        isnotempty(MailboxOwnerUPN), MailboxOwnerUPN,                                        // prefer MailboxOwnerUPN — reflects the mailbox being acted upon
-        isnotempty(UserId), UserId,                                                          // fall back to UserId if MailboxOwnerUPN is unpopulated
+        isnotempty(MailboxOwnerUPN), MailboxOwnerUPN,
+        isnotempty(UserId), UserId,
         ""
         ))
-    | where isnotempty(ResolvedUPN)                                                          // drop rows where neither field was populated
-    | where ResolvedUPN in (mbx)                                                             // prune to CSV mailboxes only
-    | project ResolvedUPN, Timestamp, ActionType                                             // drop all other columns before aggregation
-    | summarize arg_max(Timestamp, ActionType) by ResolvedUPN                                // arg_max finds the latest row and carries ActionType from it
-    | project ResolvedUPN, LastSeen = Timestamp, LastOperation = ActionType;                 // rename for clean output
+    | where isnotempty(ResolvedUPN)
+    | where ResolvedUPN in (mbx)
+    | project ResolvedUPN, Timestamp, ActionType
+    | summarize arg_max(Timestamp, ActionType) by ResolvedUPN
+    | project ResolvedUPN, LastSeen = Timestamp, LastOperation = ActionType;
 mbx
-| lookup kind=leftouter activeMailboxes on $left.PrimarySmtpAddress == $right.ResolvedUPN    // leftouter preserves all CSV rows — unmatched rows appear as Stale / Orphaned
+| lookup kind=leftouter activeMailboxes on $left.PrimarySmtpAddress == $right.ResolvedUPN 
 | extend Status = case(
-    isnotempty(LastSeen), "Active",                                                          // LastSeen is null for unmatched rows — falls through to Stale / Orphaned
+    isnotempty(LastSeen), "Active",
     "Stale / Orphaned"
     )
 | project PrimarySmtpAddress, Status, LastSeen, LastOperation
-| sort by Status asc, LastSeen asc                                                           // stale mailboxes sort to top, oldest activity first within Active
+| sort by Status asc, LastSeen asc
 ```
 
 > ## query w/ watchlist
@@ -143,29 +143,29 @@ let mbx = materialize(
 let activeMailboxes =
     CloudAppEvents
     | where TimeGenerated >= ago(30d)
-    | where Application == "Microsoft Exchange Online"                                       // scope to Exchange only
-    | extend Raw = parse_json(RawEventData)                                                  // parse JSON once into Raw and reuse
+    | where Application == "Microsoft Exchange Online"
+    | extend Raw = parse_json(RawEventData)
     | extend MailboxOwnerUPN = tostring(Raw.MailboxOwnerUPN)
     | extend UserId = tostring(Raw.UserId)
-    | project-away Raw                                                                       // drop JSON; no longer needed
+    | project-away Raw
     | extend ResolvedUPN = tolower(case(
-        isnotempty(MailboxOwnerUPN), MailboxOwnerUPN,                                        // prefer MailboxOwnerUPN — reflects the mailbox being acted upon
-        isnotempty(UserId), UserId,                                                          // fall back to UserId if MailboxOwnerUPN is unpopulated
+        isnotempty(MailboxOwnerUPN), MailboxOwnerUPN,
+        isnotempty(UserId), UserId,
         ""
         ))
-    | where isnotempty(ResolvedUPN)                                                          // drop rows where neither field was populated
-    | where ResolvedUPN in (mbx)                                                             // prune to CSV mailboxes only
-    | project ResolvedUPN, TimeGenerated, ActionType                                         // drop all other columns before aggregation
-    | summarize arg_max(TimeGenerated, ActionType) by ResolvedUPN                            // arg_max finds the latest row and carries ActionType from it
-    | project ResolvedUPN, LastSeen = TimeGenerated, LastOperation = ActionType;             // rename for clean output
+    | where isnotempty(ResolvedUPN)
+    | where ResolvedUPN in (mbx)
+    | project ResolvedUPN, TimeGenerated, ActionType
+    | summarize arg_max(TimeGenerated, ActionType) by ResolvedUPN
+    | project ResolvedUPN, LastSeen = TimeGenerated, LastOperation = ActionType;
 mbx
-| lookup kind=leftouter activeMailboxes on $left.PrimarySmtpAddress == $right.ResolvedUPN    // leftouter preserves all CSV rows — unmatched rows appear as Stale / Orphaned
+| lookup kind=leftouter activeMailboxes on $left.PrimarySmtpAddress == $right.ResolvedUPN
 | extend Status = case(
-    isnotempty(LastSeen), "Active",                                                          // LastSeen is null for unmatched rows — falls through to Stale / Orphaned
+    isnotempty(LastSeen), "Active",
     "Stale / Orphaned"
     )
 | project PrimarySmtpAddress, Status, LastSeen, LastOperation
-| sort by Status asc, LastSeen asc                                                           // stale mailboxes sort to top, oldest activity first within Active
+| sort by Status asc, LastSeen asc
 ```
 
 > ## lightweight option w/ toscalar
@@ -179,26 +179,26 @@ let mbx_set = toscalar(
     h@"?<sas_token>"
     ]
     with (format='csv', ignorefirstrecord=true)
-    | where PrimarySmtpAddress != "PrimarySmtpAddress"                                       // drop header row
-    | project PrimarySmtpAddress = tolower(PrimarySmtpAddress)                               // normalize to lowercase
+    | where PrimarySmtpAddress != "PrimarySmtpAddress"
+    | project PrimarySmtpAddress = tolower(PrimarySmtpAddress)
     | summarize make_set(PrimarySmtpAddress)
     );
 CloudAppEvents
 | where Timestamp >= ago(30d)
-| where Application == "Microsoft Exchange Online"                                           // scope to Exchange only
-| extend Raw = parse_json(RawEventData)                                                      // parse JSON once into Raw and reuse
+| where Application == "Microsoft Exchange Online"
+| extend Raw = parse_json(RawEventData)
 | extend MailboxOwnerUPN = tostring(Raw.MailboxOwnerUPN)
 | extend UserId = tostring(Raw.UserId)
-| project-away Raw                                                                           // drop JSON; no longer needed
+| project-away Raw
 | extend ResolvedUPN = tolower(case(
-    isnotempty(MailboxOwnerUPN), MailboxOwnerUPN,                                            // prefer MailboxOwnerUPN — reflects the mailbox being acted upon
-    isnotempty(UserId), UserId,                                                              // fall back to UserId if MailboxOwnerUPN is unpopulated
+    isnotempty(MailboxOwnerUPN), MailboxOwnerUPN,
+    isnotempty(UserId), UserId,
     ""
     ))
-| where isnotempty(ResolvedUPN)                                                              // drop rows where neither field was populated
-| where ResolvedUPN in (mbx_set)                                                             // prune to CSV mailboxes only
-| project ResolvedUPN                                                                        // drop all remaining columns — only ResolvedUPN needed
-| distinct ResolvedUPN                                                                       // one row per active mailbox
+| where isnotempty(ResolvedUPN)
+| where ResolvedUPN in (mbx_set)
+| project ResolvedUPN
+| distinct ResolvedUPN
 // | summarize EventCount = count() by ResolvedUPN
 ```
 
