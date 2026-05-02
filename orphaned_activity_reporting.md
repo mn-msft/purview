@@ -3,7 +3,7 @@
 <pre style="background: transparent; padding: 0; margin: 0; font-family: 'JetBrains Mono', monospace; line-height: 1.25;">
 mbx (reference list)                       CloudAppEvents
 ┌────────────────────┐                    ┌──────┬────────────────────┬─────────────┐
-│ PrimarySmtpAddress │                    │ row  │ UPN                │ ...         │
+│ PrimarySmtpAddress │                    │ ...  │ UPN                │ ...         │
 ├────────────────────┤                    ├──────┼────────────────────┼─────────────┤
 │ bob@contoso.com    │ ·················► │      │                    │             │
 │ susan@contoso.com  │ ·················► │      │ bob@contoso.com    │             │
