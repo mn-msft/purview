@@ -137,7 +137,7 @@ mbx
 
 ```kusto
 let mbx = materialize(
-    _GetWatchlist('bw_senders')
+    _GetWatchlist('mbx')
     | project PrimarySmtpAddress = tolower(PrimarySmtpAddress)
     );
 let activeMailboxes =
