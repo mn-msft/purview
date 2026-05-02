@@ -7,7 +7,7 @@ mbx (reference list)                       CloudAppEvents
 ├────────────────────┤                    ├──────┼────────────────────┼─────────────┤
 │ bob@contoso.com    │ ·················► │      │                    │             │
 │ susan@contoso.com  │ ·················► │      │ bob@contoso.com    │             │
-│ sam@contoso.com    │ ··· no match ···   │      │                    │             │
+│ sam@contoso.com    │ ···· no match ···· │      │                    │             │
 └────────────────────┘                    │      │ susan@contoso.com  │             │
                                           │      │ bob@contoso.com    │             │
                                           │      │                    │             │
